@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aula Interativa: A Fisiologia do Sistema Auditivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A thematic, guided-learning SPA with a tab-based navigation: 1. Aula Interativa, 2. Exercícios, 3. Referências. This version removes all AI-based features and replaces them with more direct, hands-on interactive elements focused on musical and audio applications. The goal is to enhance learning through direct experience (seeing, hearing, interacting) rather than through AI-generated text. -->
+    <!-- Visualization & Content Choices: 
+        - AI Features: Removed all Gemini API calls and related UI elements.
+        - Ear Anatomy Diagram: Redesigned for better visual clarity and detail.
+        - Cochlear Amplifier: Replaced AI button with an interactive slider showing CCE effort vs. sound level, making the concept of active amplification tangible.
+        - Action Potential: Replaced AI button with an animated Chart.js graph that plots the voltage curve in sync with the step-by-step explanation.
+        - Central Pathway Illustration: Redesigned for better visual flow and separated from the summary table to fix layout issues. This update specifically addresses the layout bug by using a modern Flexbox structure instead of floats.
+        - Audio Protector Simulator: Replaced AI risk analysis with a Web Audio API-based simulator. Users can play a sound and switch between filter settings that mimic different earplugs, directly demonstrating the concept of flat vs. non-flat attenuation. This provides a powerful, experiential learning tool.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #1f2937;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+            white-space: nowrap;
+        }
+        .has-tooltip:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-bottom: 4px solid transparent;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            color: #0369a1; /* sky-700 */
+            border-bottom-color: #0369a1;
+        }
+        .tab-btn:not(.active) {
+            color: #4b5563; /* gray-600 */
+        }
+        .tab-btn:hover:not(.active) {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+    </style>
+</head>
+<body class="bg-amber-50 text-zinc-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-40 shadow-sm">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col items-center pt-4">
+                 <h1 class="text-2xl md:text-3xl font-bold text-sky-900">Fisiologia e Psicoacústica do Sistema Auditivo</h1>
+                 <p class="text-md text-zinc-600 mt-1">Uma Exploração Interativa para Músicos e Tecnólogos</p>
+            </div>
+            <nav class="mt-4 flex justify-center border-b border-gray-200">
+                <button id="tab-aula" class="tab-btn active" data-tab="aula">Aula Interativa</button>
+                <button id="tab-exercicios" class="tab-btn" data-tab="exercicios">Exercícios de Fixação</button>
+                <button id="tab-referencias" class="tab-btn" data-tab="referencias">Referências</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        
+        <!-- Conteúdo da Aula Interativa -->
+        <div id="content-aula" class="tab-content">
+            <section id="introducao" class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4 text-sky-800">Por que sua voz soa "estranha" gravada?</h2>
+                <p class="max-w-3xl mx-auto text-lg text-zinc-700 mb-8">Este fenômeno universal é a porta de entrada para a nossa jornada. Ele revela que não ouvimos com nossos ouvidos, mas com nosso cérebro, através de duas vias distintas. Vamos desvendar esse e outros mistérios da audição.</p>
+                <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-amber-200"><h3 class="font-bold text-xl mb-2 text-sky-700">👂 Condução Aérea</h3><p class="text-zinc-600">O som viaja pelo ar, entra no canal auditivo e é capturado por um microfone. É como os outros ouvem você e como sua voz é gravada.</p></div>
+                    <div class="bg-white p-6 rounded-xl shadow-md border border-amber-200"><h3 class="font-bold text-xl mb-2 text-sky-700">💀 Condução Óssea</h3><p class="text-zinc-600">As vibrações de suas cordas vocais viajam diretamente pelos ossos do crânio para o ouvido interno, reforçando as baixas frequências. É a "mixagem" que só você ouve.</p></div>
+                </div>
+            </section>
+
+            <section id="jornada" class="mb-16">
+                <h2 class="text-3xl font-bold text-center mb-2 text-sky-800">A Jornada do Som</h2>
+                <p class="text-center text-lg text-zinc-700 mb-10">O som não é apenas "ouvido" - ele é capturado, traduzido, processado e interpretado. Navegue pelas etapas cruciais desta jornada para explorar cada módulo.</p>
+                <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-center">
+                    <a href="#hardware" class="p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-amber-100 transition-all w-full md:w-auto"><div class="text-4xl">👂</div><h3 class="font-bold mt-2">1. O Hardware</h3><p class="text-sm text-zinc-600">Captura e Transdução</p></a>
+                    <div class="text-2xl text-amber-500 font-bold hidden md:block">➡️</div><div class="text-2xl text-amber-500 font-bold md:hidden">⬇️</div>
+                    <a href="#software" class="p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-amber-100 transition-all w-full md:w-auto"><div class="text-4xl">🧠</div><h3 class="font-bold mt-2">2. O Software</h3><p class="text-sm text-zinc-600">Processamento Central</p></a>
+                    <div class="text-2xl text-amber-500 font-bold hidden md:block">➡️</div><div class="text-2xl text-amber-500 font-bold md:hidden">⬇️</div>
+                    <a href="#saude" class="p-4 bg-white rounded-lg shadow-md hover:shadow-xl hover:bg-amber-100 transition-all w-full md:w-auto"><div class="text-4xl">🛡️</div><h3 class="font-bold mt-2">3. O Manual do Usuário</h3><p class="text-sm text-zinc-600">Saúde e Proteção</p></a>
+                </div>
+            </section>
+            
+            <section id="hardware" class="pt-16">
+                <h2 class="text-3xl font-bold text-center mb-2 text-sky-800">Módulo 1: O Hardware de Captura</h2>
+                <p class="text-center text-lg text-zinc-700 mb-12 max-w-3xl mx-auto">Nesta seção, exploramos a periferia do sistema auditivo. Veja a anatomia do ouvido, como a cóclea organiza as frequências e o papel do "amplificador" biológico e do potencial de ação.</p>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-6 text-center">Ilustração: Anatomia do Sistema Auditivo Periférico</h3>
+                    <div class="relative w-full max-w-3xl mx-auto h-80 bg-amber-100/50 rounded-lg p-4">
+                        <div class="has-tooltip absolute left-[2%] top-[25%] w-[20%] h-[50%] bg-amber-200 rounded-r-full rounded-l-xl flex items-center justify-center font-bold text-amber-800"><span class="tooltip -mt-12">Ouvido Externo</span>Orelha</div>
+                        <div class="has-tooltip absolute left-[22%] top-[42%] w-[25%] h-[16%] bg-amber-300 rounded-md flex items-center justify-center text-sm"><span class="tooltip -mt-10">Canal Auditivo</span>Canal</div>
+                        <div class="has-tooltip absolute left-[47%] top-[35%] w-1 h-[30%] bg-gray-400 rounded-full"><span class="tooltip -mt-12">Tímpano</span></div>
+                        <div class="has-tooltip absolute left-[49%] top-[48%] flex items-center gap-0.5"><div class="w-2 h-4 bg-gray-600 rounded-sm"></div><div class="w-4 h-2 bg-gray-600 rounded-sm"></div><span class="tooltip -mt-10">Ossículos</span></div>
+                        <div class="has-tooltip absolute right-[5%] top-[10%] w-24 h-24 bg-sky-200 rounded-full flex items-center justify-center text-sm font-semibold"><span class="tooltip -mt-12">Canais Semicirculares (Equilíbrio)</span>Equilíbrio</div>
+                        <div class="has-tooltip absolute right-[15%] top-[45%] w-32 h-20 bg-sky-300 rounded-full flex items-center justify-center font-bold text-sky-800" style="clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 100%, 50% 75%, 0% 75%); transform: rotate(-30deg)"><span class="tooltip -mt-12">Cóclea (Audição)</span>Cóclea</div>
+                        <div class="has-tooltip absolute right-[2%] top-[70%] h-8 w-24 bg-yellow-300 rounded-full flex items-center justify-center text-sm font-semibold"><span class="tooltip mt-10">Nervo Auditivo</span>Nervo</div>
+                    </div>
+                     <p class="text-center text-sm text-gray-500 mt-4">Passe o mouse sobre as estruturas para ver sua função.</p>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-4">Tabela 1: Organização Tonotópica da Cóclea</h3>
+                    <p class="mb-6">A membrana basilar dentro da cóclea funciona como um analisador de frequência. Ela é desenrolada abaixo para mostrar que sons agudos (altas frequências) vibram a base da cóclea, enquanto sons graves (baixas frequências) vibram o ápice.</p>
+                    <div class="w-full h-16 bg-gradient-to-r from-sky-500 to-purple-500 rounded-lg flex justify-between items-center px-4 text-white font-bold"><span>Base: Agudos (ex: 20 kHz)</span><span>Ápice: Graves (ex: 20 Hz)</span></div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-4">O Amplificador Coclear Interativo</h3>
+                    <p class="mb-6" id="cochlear-amplifier-text">As Células Ciliadas Externas (CCE) agem como um amplificador ativo, especialmente para sons fracos. Use o controle deslizante para ver como o "esforço" das CCEs muda com o nível do som de entrada.</p>
+                    <div class="mb-4">
+                        <label for="cce-slider" class="block font-semibold mb-2">Nível do Som de Entrada: <span id="cce-level-label" class="font-bold text-sky-600">Fraco</span></label>
+                        <input type="range" id="cce-slider" min="0" max="100" step="1" value="10" class="w-full">
+                    </div>
+                    <div class="flex justify-around items-center h-24 bg-amber-100/50 rounded-lg p-4">
+                        <div><h4 class="font-bold text-lg">CCI (Microfone)</h4><p>Envia sinal ao cérebro</p></div>
+                        <div class="text-4xl font-bold text-sky-600 transition-transform duration-300" id="cce-arrow">➡️</div>
+                        <div><h4 class="font-bold text-lg">CCE (Amplificador)</h4><p id="cce-status">Esforço: Alto</p></div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-4">O Potencial de Ação: Visualização Dinâmica</h3>
+                    <p class="mb-6" id="action-potential-text">Toda a complexidade da música é codificada em pulsos elétricos idênticos. Clique nos passos abaixo para visualizar o processo e ver o gráfico da voltagem se formar em tempo real.</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 gap-2 text-center font-semibold mb-4">
+                                <button data-step="1" class="step-btn p-3 border-b-4 bg-sky-100 border-sky-600 rounded-t-lg">1. Repouso</button>
+                                <button data-step="2" class="step-btn p-3 border-b-4 border-gray-300 rounded-t-lg">2. Despolarização</button>
+                                <button data-step="3" class="step-btn p-3 border-b-4 border-gray-300 rounded-t-lg">3. Repolarização</button>
+                                <button data-step="4" class="step-btn p-3 border-b-4 border-gray-300 rounded-t-lg">4. Hiperpolarização</button>
+                                <button data-step="5" class="step-btn p-3 border-b-4 border-gray-300 rounded-t-lg">5. Retorno</button>
+                            </div>
+                            <div id="action-potential-display" class="bg-amber-100/50 p-4 rounded-lg text-center min-h-[120px]"></div>
+                        </div>
+                        <div class="chart-container h-64 md:h-auto"><canvas id="apChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="software" class="pt-16">
+                <h2 class="text-3xl font-bold text-center mb-2 text-sky-800">Módulo 2: O Software de Processamento</h2>
+                <p class="text-center text-lg text-zinc-700 mb-12 max-w-3xl mx-auto">Uma vez que o som é convertido em eletricidade, ele viaja por uma série de "estações de processamento". Cada estação extrai e refina características específicas do som, como uma cadeia de plugins em uma DAW.</p>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-6 text-center">Ilustração: A Via Auditiva Central</h3>
+                    <p class="text-center text-sm text-gray-500 mb-6">Esta via é como uma linha de montagem para o som. Clique em cada estação para mais detalhes.</p>
+                    <div class="relative w-full max-w-xl mx-auto p-4">
+                        <!-- The central vertical line -->
+                        <div class="absolute top-0 left-1/2 w-1 bg-sky-200 h-full -translate-x-1/2"></div>
+                        <div class="space-y-4 md:space-y-0">
+                            <!-- Station: Córtex -->
+                            <div class="station-item flex justify-between items-center w-full">
+                                <div class="w-5/12 text-right"><div class="p-3 rounded-lg bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow station-content-box inline-block" data-station-title="🧠 Córtex Auditivo"><h4 class="font-bold text-sky-800">Córtex Auditivo</h4><p class="text-sm text-zinc-600">Percepção Consciente</p></div></div>
+                                <div class="w-2/12 flex justify-center"><div class="z-10 bg-white border-4 border-sky-600 rounded-full w-6 h-6"></div></div>
+                                <div class="w-5/12"></div>
+                            </div>
+                            <!-- Station: CGM -->
+                            <div class="station-item flex justify-between items-center w-full flex-row-reverse">
+                                <div class="w-5/12 text-left"><div class="p-3 rounded-lg bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow station-content-box inline-block" data-station-title="🚪 Corpo Geniculado Medial"><h4 class="font-bold text-sky-800">Corpo Geniculado Medial</h4><p class="text-sm text-zinc-600">Portão Atencional</p></div></div>
+                                <div class="w-2/12 flex justify-center"><div class="z-10 bg-white border-4 border-sky-600 rounded-full w-6 h-6"></div></div>
+                                <div class="w-5/12"></div>
+                            </div>
+                            <!-- Station: CI -->
+                            <div class="station-item flex justify-between items-center w-full">
+                                <div class="w-5/12 text-right"><div class="p-3 rounded-lg bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow station-content-box inline-block" data-station-title="🗺️ Colículo Inferior"><h4 class="font-bold text-sky-800">Colículo Inferior</h4><p class="text-sm text-zinc-600">Hub de Integração Espacial</p></div></div>
+                                <div class="w-2/12 flex justify-center"><div class="z-10 bg-white border-4 border-sky-600 rounded-full w-6 h-6"></div></div>
+                                <div class="w-5/12"></div>
+                            </div>
+                            <!-- Station: COS -->
+                            <div class="station-item flex justify-between items-center w-full flex-row-reverse">
+                                <div class="w-5/12 text-left"><div class="p-3 rounded-lg bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow station-content-box inline-block" data-station-title="左右 Complexo Olivar Superior"><h4 class="font-bold text-sky-800">Complexo Olivar Superior</h4><p class="text-sm text-zinc-600">Localização Binaural</p></div></div>
+                                <div class="w-2/12 flex justify-center"><div class="z-10 bg-white border-4 border-sky-600 rounded-full w-6 h-6"></div></div>
+                                <div class="w-5/12"></div>
+                            </div>
+                            <!-- Station: NC -->
+                            <div class="station-item flex justify-between items-center w-full">
+                                <div class="w-5/12 text-right"><div class="p-3 rounded-lg bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow station-content-box inline-block" data-station-title="🎚️ Núcleo Coclear"><h4 class="font-bold text-sky-800">Núcleo Coclear</h4><p class="text-sm text-zinc-600">Primeiro Refinamento</p></div></div>
+                                <div class="w-2/12 flex justify-center"><div class="z-10 bg-white border-4 border-sky-600 rounded-full w-6 h-6"></div></div>
+                                <div class="w-5/12"></div>
+                            </div>
+                            <!-- Station: Nervo -->
+                            <div class="station-item flex justify-between items-center w-full flex-row-reverse">
+                                <div class="w-5/12 text-left"><div class="p-3 rounded-lg bg-white shadow-sm cursor-pointer hover:shadow-md transition-shadow station-content-box inline-block" data-station-title="🔌 Nervo Auditivo"><h4 class="font-bold text-sky-800">Nervo Auditivo</h4><p class="text-sm text-zinc-600">Input Bruto</p></div></div>
+                                <div class="w-2/12 flex justify-center"><div class="z-10 bg-white border-4 border-sky-600 rounded-full w-6 h-6"></div></div>
+                                <div class="w-5/12"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-4">Tabela 2: Resumo da Via Auditiva Central</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead><tr><th class="py-2 px-4 bg-sky-100 border-b-2 border-sky-200 font-bold">Estação Neural</th><th class="py-2 px-4 bg-sky-100 border-b-2 border-sky-200 font-bold">Analogia em Produção Musical</th></tr></thead>
+                            <tbody>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b border-gray-200">Núcleo Coclear (NC)</td><td class="py-2 px-4 border-b border-gray-200">Pré-amplificador com Splitter de Sinal</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b border-gray-200">Complexo Olivar Superior (COS)</td><td class="py-2 px-4 border-b border-gray-200">Controlador de Panorama (Pan Pot)</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b border-gray-200">Colículo Inferior (CI)</td><td class="py-2 px-4 border-b border-gray-200">Bus de Efeitos Espaciais (Reverb/Delay)</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b border-gray-200">Corpo Geniculado Medial (CGM)</td><td class="py-2 px-4 border-b border-gray-200">Roteador de Áudio e Gate Atencional</td></tr>
+                                <tr class="hover:bg-amber-50"><td class="py-2 px-4 border-b border-gray-200">Córtex Auditivo</td><td class="py-2 px-4 border-b border-gray-200">Master Bus e Monitores de Estúdio</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="saude" class="pt-16">
+                <h2 class="text-3xl font-bold text-center mb-2 text-sky-800">Módulo 3: O Manual do Usuário</h2>
+                <p class="text-center text-lg text-zinc-700 mb-12 max-w-3xl mx-auto">Nossa audição é robusta, mas não invencível. Compreender os limites de exposição e as ferramentas de proteção é uma responsabilidade profissional.</p>
+                
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-6">Ilustração: Escala de Risco Sonoro</h3>
+                    <div class="space-y-2"><div class="flex items-center gap-4"><div class="w-1/3 text-right font-semibold">Show de Rock (Perto do Palco)</div><div class="w-2/3 h-6 bg-red-500 rounded-r-full flex items-center px-2 text-white font-bold">115 dB</div></div><div class="flex items-center gap-4"><div class="w-1/3 text-right font-semibold">Boate / Balada</div><div class="w-2/3 h-6 bg-orange-500 rounded-r-full flex items-center px-2 text-white font-bold" style="width: 85%">105 dB</div></div><div class="flex items-center gap-4"><div class="w-1/3 text-right font-semibold">Ensaio de Banda</div><div class="w-2/3 h-6 bg-yellow-500 rounded-r-full flex items-center px-2 text-white font-bold" style="width: 75%">100 dB</div></div><div class="flex items-center gap-4"><div class="w-1/3 text-right font-semibold">Trânsito Intenso</div><div class="w-2/3 h-6 bg-lime-500 rounded-r-full flex items-center px-2 text-white font-bold" style="width: 60%">85 dB</div></div><div class="flex items-center gap-4"><div class="w-1/3 text-right font-semibold">Conversa Normal</div><div class="w-2/3 h-6 bg-green-500 rounded-r-full flex items-center px-2 text-white font-bold" style="width: 45%">60 dB</div></div><div class="flex items-center gap-4"><div class="w-1/3 text-right font-semibold">Biblioteca Silenciosa</div><div class="w-2/3 h-6 bg-teal-500 rounded-r-full flex items-center px-2 text-white font-bold" style="width: 30%">40 dB</div></div></div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg mb-12">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-2">Tabela 3: Limites de Exposição ao Ruído (Norma OSHA)</h3>
+                    <p class="mb-6">A relação entre intensidade sonora e tempo de exposição seguro não é linear. Use o controle deslizante abaixo para ver como o tempo de exposição permitido diminui drasticamente a cada 5 dB de aumento no nível de pressão sonora (SPL).</p>
+                    <div class="mb-4"><label for="spl-slider" class="block font-semibold mb-2">Nível de Pressão Sonora: <span id="spl-value" class="font-bold text-sky-600">95 dBA</span></label><input type="range" id="spl-slider" min="85" max="115" step="5" value="95" class="w-full"></div>
+                    <div class="chart-container"><canvas id="oshaChart"></canvas></div>
+                </div>
+
+                <div class="bg-white p-8 rounded-2xl shadow-lg">
+                    <h3 class="text-2xl font-bold text-sky-700 mb-2">Simulador Interativo de Protetores Auditivos</h3>
+                    <p class="mb-6">Ouça a diferença! Clique em "Tocar Som" e alterne entre os tipos de proteção para ouvir como cada um afeta a qualidade sonora. Note como o protetor de espuma abafa os agudos, enquanto o de alta fidelidade preserva o timbre.</p>
+                    <div class="flex flex-wrap justify-center gap-4 mb-6">
+                        <button id="play-sound-btn" class="bg-green-500 text-white font-bold py-2 px-4 rounded-full shadow-md hover:bg-green-600">▶️ Tocar Som</button>
+                        <div class="flex items-center gap-2">
+                            <label class="font-semibold">Filtro:</label>
+                            <select id="filter-type-select" class="p-2 border border-gray-300 rounded-lg">
+                                <option value="none">Sem Proteção</option>
+                                <option value="foam">Protetor de Espuma</option>
+                                <option value="hifi">Protetor de Alta Fidelidade</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="chart-container"><canvas id="protectorsChart"></canvas></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Conteúdo dos Exercícios -->
+        <div id="content-exercicios" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-center mb-8 text-sky-800">Exercícios de Fixação</h2>
+            <div class="space-y-10">
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 quiz-item" data-correct="b"><p class="font-bold mb-4">1. Qual é a principal razão pela qual nossa voz gravada soa diferente da voz que ouvimos ao falar?</p><div class="space-y-2"><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q1" value="a" class="mr-3">A gravação distorce as altas frequências.</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q1" value="b" class="mr-3">A gravação não captura o som transmitido pela condução óssea.</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q1" value="c" class="mr-3">Os microfones modernos não são sensíveis o suficiente.</label></div><div class="feedback mt-4 p-4 rounded-lg hidden"></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 quiz-item" data-correct="c"><p class="font-bold mb-4">2. Qual é a função primária das Células Ciliadas Externas (CCEs)?</p><div class="space-y-2"><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q2" value="a" class="mr-3">Enviar 95% da informação sonora para o cérebro.</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q2" value="b" class="mr-3">Proteger o ouvido interno de sons muito altos.</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q2" value="c" class="mr-3">Amplificar mecanicamente os sons fracos e aguçar a sintonia de frequência.</label></div><div class="feedback mt-4 p-4 rounded-lg hidden"></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 quiz-item" data-correct="a"><p class="font-bold mb-4">3. Como o sistema nervoso codifica um aumento na intensidade de um som?</p><div class="space-y-2"><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q3" value="a" class="mr-3">Aumentando a taxa de disparo dos neurônios e recrutando mais neurônios.</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q3" value="b" class="mr-3">Aumentando a amplitude (voltagem) de cada potencial de ação.</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q3" value="c" class="mr-3">Enviando o sinal por uma via neural completamente diferente.</label></div><div class="feedback mt-4 p-4 rounded-lg hidden"></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 quiz-item" data-correct="b"><p class="font-bold mb-4">4. Qual núcleo da via auditiva central é o primeiro a receber informações de ambos os ouvidos e é crucial para a localização sonora horizontal?</p><div class="space-y-2"><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q4" value="a" class="mr-3">Núcleo Coclear (NC)</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q4" value="b" class="mr-3">Complexo Olivar Superior (COS)</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q4" value="c" class="mr-3">Córtex Auditivo</label></div><div class="feedback mt-4 p-4 rounded-lg hidden"></div></div>
+                <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 quiz-item" data-correct="a"><p class="font-bold mb-4">5. A sensação de audição "abafada" após um show, que melhora após descanso, é chamada de:</p><div class="space-y-2"><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q5" value="a" class="mr-3">Mudança Temporária de Limiar (TTS)</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q5" value="b" class="mr-3">Mudança Permanente de Limiar (PTS)</label><label class="flex items-center p-3 rounded-lg hover:bg-amber-50 cursor-pointer"><input type="radio" name="q5" value="c" class="mr-3">Otoemissão Acústica</label></div><div class="feedback mt-4 p-4 rounded-lg hidden"></div></div>
+            </div>
+            <div class="text-center mt-10"><button id="check-answers-btn" class="bg-sky-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-sky-700 transition-transform hover:scale-105">Verificar Respostas</button></div>
+        </div>
+
+        <!-- Conteúdo das Referências -->
+        <div id="content-referencias" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-center mb-8 text-sky-800">Referências Bibliográficas</h2>
+            <div class="max-w-4xl mx-auto space-y-12">
+                <div>
+                    <h3 class="text-2xl font-semibold text-sky-700 border-b-2 border-amber-400 pb-2 mb-4">Obras Clássicas e Fundamentais</h3>
+                    <ul class="space-y-4 list-disc list-inside text-zinc-700">
+                        <li><span class="font-bold">Békésy, G. (1960).</span> *Experiments in Hearing.* McGraw-Hill.<p class="text-sm text-zinc-600 ml-6">Obra seminal que rendeu o Prêmio Nobel, detalhando as mecânicas da onda viajante na cóclea. Leitura essencial para entender os fundamentos.</p></li>
+                        <li><span class="font-bold">Zemlin, W. R. (1998).</span> *Speech and Hearing Science: Anatomy and Physiology (4th ed.).* Allyn & Bacon.<p class="text-sm text-zinc-600 ml-6">Um dos textos mais abrangentes e clássicos sobre a anatomia e fisiologia dos sistemas de fala e audição.</p></li>
+                         <li><span class="font-bold">Stevens, S. S., & Warshofsky, F. (1965).</span> *Sound and hearing.* Time-Life Books.<p class="text-sm text-zinc-600 ml-6">Um livro de divulgação científica fantástico e visualmente rico que introduz os conceitos de acústica e audição de forma muito acessível.</p></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-2xl font-semibold text-sky-700 border-b-2 border-amber-400 pb-2 mb-4">Leituras Atuais e de Aprofundamento</h3>
+                    <ul class="space-y-4 list-disc list-inside text-zinc-700">
+                        <li><span class="font-bold">Plack, C. J. (2018).</span> *The Sense of Hearing (3rd ed.).* Routledge.<p class="text-sm text-zinc-600 ml-6">Um livro-texto moderno e extremamente claro que cobre desde a acústica básica até a neurociência cognitiva da audição. Altamente recomendado.</p></li>
+                        <li><span class="font-bold">Moore, B. C. J. (2012).</span> *An Introduction to the Psychology of Hearing (6th ed.).* Brill.<p class="text-sm text-zinc-600 ml-6">O livro de referência para a psicoacústica, detalhando como os processos fisiológicos se traduzem em percepções de altura, timbre, intensidade e cena auditiva.</p></li>
+                        <li><span class="font-bold">Schnupp, J., Nelken, I., & King, A. (2011).</span> *Auditory Neuroscience: Making Sense of Sound.* MIT Press.<p class="text-sm text-zinc-600 ml-6">Focado nas vias centrais e no processamento neural, este livro conecta a fisiologia à computação neural e à percepção complexa.</p></li>
+                        <li><span class="font-bold">Howard, D. M., & Angus, J. A. S. (2017).</span> *Acoustics and Psychoacoustics (5th ed.).* Routledge.<p class="text-sm text-zinc-600 ml-6">Uma excelente ponte entre a física do som e a percepção, com muitas aplicações práticas para engenharia de áudio e música.</p></li>
+                         <li><span class="font-bold">Yost, W. A. (2013).</span> *Fundamentals of Hearing: An Introduction (5th ed.).* Academic Press.<p class="text-sm text-zinc-600 ml-6">Um texto introdutório muito sólido e bem conceituado que equilibra fisiologia e psicoacústica.</p></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-sky-900 text-white mt-16"><div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center"><p>Compreender a fisiologia auditiva é a base para uma prática profissional em música e tecnologia que seja criativa, informada e, acima de tudo, segura.</p><p class="text-sm text-sky-200 mt-2">Aplicação interativa desenvolvida com base no Capítulo 20 do roteiro de aula.</p></div></footer>
+
+    <!-- Modals -->
+    <div id="station-modal" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center p-4"><div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative"><button id="close-modal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-2xl">&times;</button><h3 id="modal-title" class="text-2xl font-bold text-sky-700 mb-4"></h3><div class="text-zinc-600 space-y-3"><p><strong>Função Neurofisiológica:</strong> <span id="modal-function"></span></p><p><strong>Analogia em Produção Musical:</strong> <span id="modal-analogy"></span></p></div></div></div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- Tab Navigation Logic ---
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.dataset.tab;
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                tabContents.forEach(content => {
+                    content.id === `content-${tabId}` ? content.classList.remove('hidden') : content.classList.add('hidden');
+                });
+            });
+        });
+
+        // --- CCE Amplifier Logic ---
+        const cceSlider = document.getElementById('cce-slider');
+        const cceLevelLabel = document.getElementById('cce-level-label');
+        const cceStatus = document.getElementById('cce-status');
+        const cceArrow = document.getElementById('cce-arrow');
+        cceSlider.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            if (value < 33) {
+                cceLevelLabel.textContent = 'Fraco';
+                cceStatus.textContent = 'Esforço: Alto';
+                cceArrow.style.transform = 'scale(1.5)';
+            } else if (value < 66) {
+                cceLevelLabel.textContent = 'Médio';
+                cceStatus.textContent = 'Esforço: Moderado';
+                cceArrow.style.transform = 'scale(1.0)';
+            } else {
+                cceLevelLabel.textContent = 'Forte';
+                cceStatus.textContent = 'Esforço: Baixo';
+                cceArrow.style.transform = 'scale(0.75)';
+            }
+        });
+
+        // --- Action Potential Chart Logic ---
+        const apCtx = document.getElementById('apChart').getContext('2d');
+        const apData = {
+            labels: ['Repouso', 'Estímulo', 'Pico', 'Repolarização', 'Hiperpolarização', 'Repouso'],
+            values: [-70, -55, 30, -75, -80, -70]
+        };
+        const apChart = new Chart(apCtx, {
+            type: 'line',
+            data: {
+                labels: apData.labels,
+                datasets: [{
+                    label: 'Voltagem (mV)',
+                    borderColor: '#0369a1',
+                    borderWidth: 3,
+                    data: [],
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: false, title: { display: true, text: 'Voltagem (mV)' } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+        
+        const actionPotentialSteps = {
+            1: { title: "Potencial de Repouso (-70 mV)", description: "O neurônio está 'em espera'.", chartIndex: 0 },
+            2: { title: "Despolarização (Na⁺ entra)", description: "Um estímulo abre os canais de Sódio. Íons Na⁺ entram em massa, tornando o interior da célula positivo.", chartIndex: 2 },
+            3: { title: "Repolarização (K⁺ sai)", description: "No pico, os canais de K⁺ abrem. Íons K⁺ saem, restaurando a carga negativa.", chartIndex: 3 },
+            4: { title: "Hiperpolarização", description: "Muitos íons K⁺ saem, tornando a célula brevemente mais negativa que o repouso.", chartIndex: 4 },
+            5: { title: "Retorno ao Repouso", description: "As bombas de íons restauram o equilíbrio, deixando o neurônio pronto.", chartIndex: 5 }
+        };
+        const stepButtons = document.querySelectorAll('.step-btn');
+        const display = document.getElementById('action-potential-display');
+        function updateActionPotentialDisplay(step) {
+            stepButtons.forEach(btn => {
+                if (btn.dataset.step === step) { btn.classList.add('border-sky-600', 'bg-sky-100'); btn.classList.remove('border-gray-300'); } 
+                else { btn.classList.add('border-gray-300'); btn.classList.remove('border-sky-600', 'bg-sky-100'); }
+            });
+            const stepData = actionPotentialSteps[step];
+            display.innerHTML = `<h4 class="font-bold text-lg mb-2">${stepData.title}</h4><p>${stepData.description}</p>`;
+            
+            apChart.data.datasets[0].data = apData.values.slice(0, stepData.chartIndex + 1);
+            apChart.update();
+        }
+        stepButtons.forEach(btn => btn.addEventListener('click', () => updateActionPotentialDisplay(btn.dataset.step)));
+        updateActionPotentialDisplay('1');
+
+        // --- Audio Protector Simulator ---
+        let audioCtx, oscillator, gainNode, filterNode;
+        let isPlaying = false;
+        const playBtn = document.getElementById('play-sound-btn');
+        const filterSelect = document.getElementById('filter-type-select');
+
+        function setupAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime); // Start muted
+            filterNode = audioCtx.createBiquadFilter();
+            
+            oscillator = audioCtx.createOscillator();
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
+            
+            oscillator.connect(filterNode).connect(gainNode).connect(audioCtx.destination);
+            oscillator.start();
+        }
+
+        function playSound() {
+            if (!audioCtx) setupAudio();
+            gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.1);
+            isPlaying = true;
+            playBtn.innerHTML = '⏹️ Parar Som';
+        }
+
+        function stopSound() {
+            if (!audioCtx) return;
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            isPlaying = false;
+            playBtn.innerHTML = '▶️ Tocar Som';
+        }
+
+        playBtn.addEventListener('click', () => {
+            isPlaying ? stopSound() : playSound();
+        });
+
+        filterSelect.addEventListener('change', (e) => {
+            if (!audioCtx) setupAudio(); // Ensure context exists before changing filter
+            const type = e.target.value;
+            // Reset filter to a known state before applying new settings
+            filterNode.type = 'allpass';
+            filterNode.gain.value = 0;
+
+            if (type === 'none') {
+                filterNode.type = 'allpass';
+            } else if (type === 'foam') {
+                filterNode.type = 'lowpass';
+                filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                filterNode.Q.setValueAtTime(0.7, audioCtx.currentTime);
+            } else if (type === 'hifi') {
+                filterNode.type = 'lowshelf';
+                filterNode.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                filterNode.gain.setValueAtTime(-15, audioCtx.currentTime);
+            }
+        });
+
+        // --- Quiz Logic ---
+        const checkAnswersBtn = document.getElementById('check-answers-btn');
+        const quizItems = document.querySelectorAll('.quiz-item');
+        const answerKeys = {
+            q1: { correct: 'b', explanation: '<strong>Correto!</strong> A voz que ouvimos ao falar é uma mistura de som via condução aérea e condução óssea (vibrações pelo crânio). A condução óssea reforça os graves, fazendo nossa voz parecer mais encorpada para nós mesmos. Uma gravação captura apenas a condução aérea, que é mais "fina".' },
+            q2: { correct: 'c', explanation: '<strong>Correto!</strong> As CCEs funcionam como um amplificador ativo, usando sua eletromotilidade para aumentar a vibração da membrana basilar para sons fracos. Isso melhora nossa sensibilidade e nossa capacidade de distinguir frequências próximas. As Células Ciliadas Internas (CCIs) é que enviam a maior parte da informação ao cérebro.' },
+            q3: { correct: 'a', explanation: '<strong>Correto!</strong> O potencial de ação é "tudo ou nada", sua amplitude não muda. A intensidade é codificada pela frequência com que os neurônios disparam (taxa de disparo) e pela quantidade de neurônios ativados (recrutamento).' },
+            q4: { correct: 'b', explanation: '<strong>Correto!</strong> O Complexo Olivar Superior (COS) é a primeira estrutura a comparar os sinais vindos dos dois ouvidos, analisando as diferenças de tempo e intensidade para localizar sons no plano horizontal (esquerda/direita).' },
+            q5: { correct: 'a', explanation: '<strong>Correto!</strong> A Mudança Temporária de Limiar (TTS) é um sinal de fadiga das células ciliadas e é reversível com descanso. A Mudança Permanente de Limiar (PTS) envolve dano celular irreversível e perda auditiva.' }
+        };
+        checkAnswersBtn.addEventListener('click', () => {
+            quizItems.forEach((item, index) => {
+                const questionName = `q${index + 1}`;
+                const selected = document.querySelector(`input[name="${questionName}"]:checked`);
+                const feedbackEl = item.querySelector('.feedback');
+                feedbackEl.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+                if (selected) {
+                    const isCorrect = selected.value === answerKeys[questionName].correct;
+                    if (isCorrect) { feedbackEl.classList.add('bg-green-100', 'text-green-800'); } 
+                    else { feedbackEl.classList.add('bg-red-100', 'text-red-800'); }
+                    feedbackEl.innerHTML = answerKeys[questionName].explanation;
+                } else {
+                    feedbackEl.classList.add('bg-yellow-100', 'text-yellow-800');
+                    feedbackEl.innerHTML = 'Por favor, selecione uma resposta.';
+                }
+                feedbackEl.classList.remove('hidden');
+            });
+        });
+
+        // --- Central Auditory Pathway Modal Logic ---
+        const stationData = {
+            "🧠 Córtex Auditivo": { func: "Local da percepção consciente. Analisa padrões complexos como timbre, melodia, harmonia e ritmo, dando significado ao som.", analogy: "A interface final da DAW e os monitores do estúdio, onde tudo é combinado e interpretado como música." },
+            "🚪 Corpo Geniculado Medial": { func: "Estação de relé no tálamo. Atua como um 'portão' que modula o fluxo de informação auditiva para o córtex com base na atenção e alerta.", analogy: "O roteador de áudio da DAW, que decide quais trilhas são enviadas para o master bus com base em comandos de automação (atenção)." },
+            "🗺️ Colículo Inferior": { func: "Hub de convergência massivo que integra informações espaciais (azimuth e elevação) e medeia o reflexo de sobressalto (startle reflex) a sons altos e súbitos.", analogy: "Um bus de efeitos espaciais (Reverb/Delay) e um limiter de emergência que reage a picos." },
+            "左右 Complexo Olivar Superior": { func: "Primeiro local de integração binaural. Processa as diferenças de tempo (ITD) e intensidade (IID) entre os dois ouvidos para localizar sons no plano horizontal.", analogy: "O Pan Pot e o Stereo Imager, que posicionam o som no campo estéreo." },
+            "🎚️ Núcleo Coclear": { func: "Primeira sinapse. Separa o sinal em diferentes características temporais (inícios, durações) e espectrais para processamento em paralelo.", analogy: "Um pré-amplificador com um splitter que envia o sinal para diferentes canais de um mixer, cada um focado em um aspecto (ex: transientes, sustentação)." },
+            "🔌 Nervo Auditivo": { func: "Transporta os sinais elétricos brutos (potenciais de ação) da cóclea para o tronco encefálico. A organização tonotópica é preservada.", analogy: "O cabo do microfone, transmitindo o sinal puro antes de qualquer processamento." }
+        };
+        const stationContentBoxes = document.querySelectorAll('.station-content-box');
+        const stationModal = document.getElementById('station-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalFunction = document.getElementById('modal-function');
+        const modalAnalogy = document.getElementById('modal-analogy');
+        stationContentBoxes.forEach(box => {
+            box.addEventListener('click', () => {
+                const title = box.dataset.stationTitle;
+                const data = stationData[title];
+                if (data) {
+                    modalTitle.textContent = title; modalFunction.textContent = data.func; modalAnalogy.textContent = data.analogy;
+                    stationModal.classList.remove('hidden'); stationModal.classList.add('flex');
+                }
+            });
+        });
+        closeModalBtn.addEventListener('click', () => stationModal.classList.add('hidden'));
+        stationModal.addEventListener('click', (e) => { if (e.target === stationModal) { stationModal.classList.add('hidden'); } });
+
+        // --- OSHA Chart Logic ---
+        const oshaCtx = document.getElementById('oshaChart').getContext('2d');
+        const splSlider = document.getElementById('spl-slider');
+        const splValue = document.getElementById('spl-value');
+        const oshaData = { labels: ['85 dBA', '90 dBA', '95 dBA', '100 dBA', '105 dBA', '110 dBA', '115 dBA'], values: [16, 8, 4, 2, 1, 0.5, 0.25] };
+        const oshaChart = new Chart(oshaCtx, { type: 'bar', data: { labels: oshaData.labels, datasets: [{ label: 'Tempo Máximo de Exposição (horas)', data: oshaData.values, backgroundColor: 'rgba(2, 132, 199, 0.2)', borderColor: 'rgba(2, 132, 199, 1)', borderWidth: 1 }] }, options: { maintainAspectRatio: false, responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Horas' } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => { let l = c.dataset.label || ''; if(l){l+=': '}; if(c.parsed.y !== null){const h=c.parsed.y; l+=(h<1?`${h*60} minutos`:`${h} horas`)}; return l; } } } } } });
+        function updateOshaChart(value) {
+            const index = (value - 85) / 5;
+            const backgroundColors = oshaData.values.map((_, i) => i === index ? 'rgba(2, 132, 199, 0.8)' : 'rgba(2, 132, 199, 0.2)');
+            oshaChart.data.datasets[0].backgroundColor = backgroundColors; oshaChart.update();
+        }
+        splSlider.addEventListener('input', (e) => { const value = e.target.value; splValue.textContent = `${value} dBA`; updateOshaChart(value); });
+        updateOshaChart(splSlider.value);
+
+        // --- Protectors Chart Logic ---
+        const protectorsCtx = document.getElementById('protectorsChart').getContext('2d');
+        new Chart(protectorsCtx, { type: 'line', data: { labels: ['125 Hz', '500 Hz', '1000 Hz', '2000 Hz', '4000 Hz', '8000 Hz'], datasets: [{ label: 'Protetor de Espuma Comum', data: [20, 25, 30, 35, 40, 42], borderColor: 'rgb(234, 88, 12)', backgroundColor: 'rgba(234, 88, 12, 0.1)', fill: true, tension: 0.1 }, { label: 'Protetor de Alta Fidelidade', data: [14, 21, 22, 22, 21, 23], borderColor: 'rgb(2, 132, 199)', backgroundColor: 'rgba(2, 132, 199, 0.1)', fill: true, tension: 0.1 }] }, options: { maintainAspectRatio: false, responsive: true, scales: { y: { beginAtZero: true, title: { display: true, text: 'Atenuação (dB)' }, reverse: true } }, plugins: { tooltip: { mode: 'index', intersect: false } } } });
+        
+    });
+    </script>
+</body>
+</html>
